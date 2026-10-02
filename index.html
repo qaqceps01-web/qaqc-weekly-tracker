@@ -16,7 +16,7 @@
   *{box-sizing:border-box}
   #qq2{font-family:Calibri,'Segoe UI',Arial,sans-serif;color:var(--ink);background:var(--surface);
     border-radius:8px;overflow:hidden;border:1px solid var(--line);font-size:14px;
-    max-width:1100px;margin:20px auto}
+    max-width:1220px;margin:20px auto}
   #qq2 button{font-family:inherit;cursor:pointer;border-radius:4px;transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease}
   #qq2 button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
   #qq2 input,#qq2 select{font-family:inherit;color:var(--ink)}
@@ -57,11 +57,13 @@
   .qq2-sync.offline .dot{background:#C4CBCE}
   .qq2-extra-toggle{font-size:12.5px;color:var(--accent);background:transparent;border:1px solid var(--line);
     padding:5px 10px;border-radius:4px}
-  .qq2-extra-toggle:hover{background:#EEF4F6}
   .qq2-toolbar-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .qq2-resync-msg{font-size:12px;color:var(--done-text);font-weight:600;opacity:0;transition:opacity .2s;white-space:nowrap}
-  .qq2-resync-msg.show{opacity:1}
-  .qq2-resync-msg.error{color:#B23A3A}
+  .qq2-excel-btn{display:inline-flex;align-items:center;gap:5px;font-weight:600;color:#1E7A44;border-color:#A3D9B5}
+  .qq2-excel-btn:hover{background:#E9F6EE;border-color:#1E7A44;color:#1E7A44}
+  .qq2-filter-daterange{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--line);padding:2px 7px;border-radius:4px}
+  .qq2-filter-daterange:focus-within{border-color:var(--accent)}
+  .qq2-filter-date{border:none;background:transparent;font-size:12px;color:var(--ink);font-family:inherit;padding:2px 0;outline:none;cursor:pointer}
+  .qq2-week-badge{display:inline-block;font-size:11px;font-weight:700;color:var(--header);background:#E2ECF0;border-radius:3px;padding:2px 6px;margin:4px 6px 2px 6px}
 
   tr.qq2-row-focus td:first-child{border-left:4px solid #DC2626;font-weight:700;color:#DC2626}
   .qq2-prio-select{font-size:12px;font-weight:700;border-radius:4px;padding:5px 6px;text-align:center;cursor:pointer}
@@ -70,10 +72,6 @@
   .qq2-prio-low{background:#E0F2FE !important;color:#0369A1 !important}
   .qq2-prio-none{color:var(--muted);background:transparent}
 
-  .qq2-tagbtn{width:24px;height:24px;border:1px solid var(--line);background:#fff;border-radius:4px;
-    font-size:12px;color:var(--muted);margin:5px auto;display:block}
-  .qq2-tagbtn:hover{border-color:var(--accent);color:var(--accent)}
-  .qq2-tagbtn.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
 
   .qq2-export{display:none;border-top:1px solid var(--line);background:#FAFBFB;padding:14px 18px}
   .qq2-export.open{display:block}
@@ -168,8 +166,6 @@
   .qq2-empty{border:1px solid var(--line);border-top:none;padding:10px;font-size:12.5px;
     color:var(--muted);font-style:italic}
   .qq2-loading{padding:36px;text-align:center;color:var(--muted);font-size:13px}
-  .qq2-extra-col{display:none}
-  #qq2.show-extra .qq2-extra-col{display:table-cell}
 
   /* Auth — Operate-mode */
   #qq2-auth{max-width:420px;margin:56px auto;font-family:Calibri,'Segoe UI',Arial,sans-serif;padding:0 14px}
@@ -224,7 +220,7 @@
       <div class="qq2-title">QA/QC Weekly Sync</div>
       <select class="qq2-week-select" id="qq2-week-select" aria-label="เลือกสัปดาห์"></select>
       <button class="qq2-newweek" id="qq2-toggle-newweek">+ สัปดาห์ใหม่</button>
-      <a class="qq2-db-link" href="https://supabase.com/dashboard/project/grtrpbnccqbtpaoovmoa/editor" target="_blank" rel="noopener noreferrer" title="เปิด Supabase Table Editor ในแท็บใหม่">
+      <a class="qq2-db-link" id="qq2-db-link" style="display:none" href="https://supabase.com/dashboard/project/grtrpbnccqbtpaoovmoa" target="_blank" rel="noopener noreferrer" title="เปิด Supabase Dashboard ในแท็บใหม่">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
         ฐานข้อมูล
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
@@ -245,10 +241,8 @@
     <div class="qq2-stats" id="qq2-stats"></div>
     <div class="qq2-toolbar-btns">
       <span class="qq2-sync offline" id="qq2-sync"><span class="dot"></span><span id="qq2-sync-text">กำลังเชื่อมต่อ...</span></span>
-      <button class="qq2-extra-toggle" id="qq2-resync-btn" title="ดึงงานที่ยังไม่เสร็จจากสัปดาห์ก่อนๆ เข้ามาในสัปดาห์นี้">🔄 ดึงงานค้างเพิ่ม</button>
-      <span class="qq2-resync-msg" id="qq2-resync-msg"></span>
-      <button class="qq2-extra-toggle" id="qq2-extra-toggle">แสดงคอลัมน์เพิ่มเติม (Due Date / แท็ก)</button>
       <button class="qq2-extra-toggle" id="qq2-export-toggle">เตรียมข้อความส่งเมล</button>
+      <button class="qq2-extra-toggle qq2-excel-btn" id="qq2-export-excel-btn" title="ส่งออกข้อมูลเป็นไฟล์ Excel (.xlsx)">📥 ส่งออก Excel</button>
     </div>
   </div>
 
@@ -259,8 +253,15 @@
       <button class="qq2-filter-pill" id="qq2-filter-pill-my" type="button" title="แสดงเฉพาะงานที่ฉันรับผิดชอบ">👤 งานของฉัน</button>
       <button class="qq2-filter-pill" id="qq2-filter-pill-high" type="button" title="แสดงเฉพาะงานที่สำคัญเร่งด่วน (High)">🔥 High เท่านั้น</button>
       <button class="qq2-filter-pill" id="qq2-filter-pill-next" type="button" title="แสดงเฉพาะงานที่ยังไม่เสร็จ (Next Step)">⏳ ยังไม่เสร็จ</button>
+      <button class="qq2-filter-pill" id="qq2-filter-pill-done" type="button" title="แสดงเฉพาะงานที่เสร็จแล้ว (Action Done)">✅ เสร็จแล้ว</button>
     </div>
     <div class="qq2-filter-group">
+      <div class="qq2-filter-daterange" title="กรองงานตามช่วงวันที่">
+        <span class="qq2-filter-label" style="margin:0 2px 0 0">ช่วงวันที่:</span>
+        <input type="date" class="qq2-filter-date" id="qq2-filter-date-from" title="จากวันที่" aria-label="จากวันที่">
+        <span style="color:var(--muted);font-size:11px">ถึง</span>
+        <input type="date" class="qq2-filter-date" id="qq2-filter-date-to" title="ถึงวันที่" aria-label="ถึงวันที่">
+      </div>
       <select class="qq2-filter-select" id="qq2-filter-pic" aria-label="กรองตามผู้รับผิดชอบ">
         <option value="">-- ผู้รับผิดชอบ (ทั้งหมด) --</option>
       </select>
@@ -290,6 +291,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 (function(){
   // ---- Supabase project config -------------------------------------------
@@ -308,7 +310,7 @@
   ];
   const ROSTER = ['-','QAQC System Admin','QAQC Admin','Tanawit Anantaphrut','Pavinee Talthip',
     'Thanikorn Wangdee','Pitchayapa Yaklai','Supatchaya Ternpongsai','Laddawan Suwankeeree',
-    'Teerapong Chotiwannapruke','Ekalak Wacharayingyong'];
+    'Teerapong Chotiwannapruke','Ekalak Wacharayingyong','Pongtep Moonsan'];
 
   const PIC_EMAILS = {
     'Pavinee Talthip': 'pavineet@scg.com',
@@ -321,7 +323,8 @@
     'QAQC Admin': 'QAQCAdmin@scg.com',
     'QAQC System Admin': 'qaqcsystemadmin@scg.com',
     'Ekalak Wacharayingyong': 'ekalakw@scg.com',
-    'Teerapong Chotiwannapruke': 'teerapoc@scg.com'
+    'Teerapong Chotiwannapruke': 'teerapoc@scg.com',
+    'Pongtep Moonsan': 'PONGTEMO@scg.com'
   };
 
   function escapeHtml(str){
@@ -373,7 +376,8 @@
     'supatcte@scg.com',
     'laddasu@scg.com',
     'ekalakw@scg.com',
-    'teerapoc@scg.com'
+    'teerapoc@scg.com',
+    'pongtemo@scg.com'
   ];
 
   let weeks = [];
@@ -428,6 +432,11 @@
     if(email){
       userEmailEl.textContent = email;
       userEmailEl.title = email;
+    }
+    const dbLink = document.getElementById('qq2-db-link');
+    if(dbLink){
+      const isQAQC01 = normalizeEmail(email) === 'qaqcsystem01@scg.com';
+      dbLink.style.display = isQAQC01 ? 'inline-flex' : 'none';
     }
     updateFilterUI();
   }
@@ -488,7 +497,17 @@
   }
 
   function currentWeekLabel(){
+    if(activeFilter && (activeFilter.dateFrom || activeFilter.dateTo)){
+      const fromStr = activeFilter.dateFrom || 'เริ่มต้น';
+      const toStr = activeFilter.dateTo || 'สิ้นสุด';
+      return `ช่วงวันที่ ${fromStr} ถึง ${toStr}`;
+    }
     const w = weeks.find(w => w.id === currentWeekId);
+    return w ? w.label : '';
+  }
+
+  function getWeekLabelById(weekId){
+    const w = weeks.find(w => w.id === weekId);
     return w ? w.label : '';
   }
 
@@ -555,13 +574,89 @@
     if(el) el.innerHTML = buildEmailHtml();
   }
 
+  function isMultiWeekView(){
+    if(!items || items.length === 0) return false;
+    const firstWeekId = items[0].weekId;
+    return items.some(i => i.weekId !== firstWeekId);
+  }
+
+  function parseWeekDateRange(label, createdAt){
+    if(!label){
+      if(createdAt){
+        const d = new Date(createdAt);
+        return { start: d, end: d };
+      }
+      return null;
+    }
+    // Pattern 1: "24 - 28 Aug 2026"
+    let m = label.match(/(\d{1,2})\s*-\s*(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
+    if(m){
+      const startDay = parseInt(m[1], 10);
+      const endDay = parseInt(m[2], 10);
+      const monthIdx = WEEK_LABEL_MONTHS.findIndex(mon => mon.toLowerCase() === m[3].toLowerCase());
+      const year = parseInt(m[4], 10);
+      if(monthIdx !== -1){
+        return {
+          start: new Date(year, monthIdx, startDay, 0, 0, 0),
+          end: new Date(year, monthIdx, endDay, 23, 59, 59)
+        };
+      }
+    }
+    // Pattern 2: "31 Aug - 4 Sep 2026"
+    m = label.match(/(\d{1,2})\s+([A-Za-z]{3})\s*-\s*(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
+    if(m){
+      const startDay = parseInt(m[1], 10);
+      const startMon = WEEK_LABEL_MONTHS.findIndex(mon => mon.toLowerCase() === m[2].toLowerCase());
+      const endDay = parseInt(m[3], 10);
+      const endMon = WEEK_LABEL_MONTHS.findIndex(mon => mon.toLowerCase() === m[4].toLowerCase());
+      const year = parseInt(m[5], 10);
+      if(startMon !== -1 && endMon !== -1){
+        return {
+          start: new Date(year, startMon, startDay, 0, 0, 0),
+          end: new Date(year, endMon, endDay, 23, 59, 59)
+        };
+      }
+    }
+    // Pattern 3: "28 Dec 2026 - 1 Jan 2027"
+    m = label.match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\s*-\s*(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
+    if(m){
+      const startDay = parseInt(m[1], 10);
+      const startMon = WEEK_LABEL_MONTHS.findIndex(mon => mon.toLowerCase() === m[2].toLowerCase());
+      const startYear = parseInt(m[3], 10);
+      const endDay = parseInt(m[4], 10);
+      const endMon = WEEK_LABEL_MONTHS.findIndex(mon => mon.toLowerCase() === m[5].toLowerCase());
+      const endYear = parseInt(m[6], 10);
+      if(startMon !== -1 && endMon !== -1){
+        return {
+          start: new Date(startYear, startMon, startDay, 0, 0, 0),
+          end: new Date(endYear, endMon, endDay, 23, 59, 59)
+        };
+      }
+    }
+    // Fallback: created_at
+    if(createdAt){
+      const d = new Date(createdAt);
+      const dEnd = new Date(d);
+      dEnd.setDate(dEnd.getDate() + 5);
+      return { start: d, end: dEnd };
+    }
+    return null;
+  }
+
   function renderWeekSelect(){
     weekSelect.innerHTML = '';
+    if(activeFilter && (activeFilter.dateFrom || activeFilter.dateTo)){
+      const rangeOpt = document.createElement('option');
+      rangeOpt.value = '__range__';
+      rangeOpt.textContent = '📅 ช่วงวันที่กำหนด';
+      rangeOpt.selected = true;
+      weekSelect.appendChild(rangeOpt);
+    }
     weeks.forEach(w => {
       const opt = document.createElement('option');
       opt.value = w.id;
       opt.textContent = w.label;
-      if(w.id === currentWeekId) opt.selected = true;
+      if((!activeFilter || (!activeFilter.dateFrom && !activeFilter.dateTo)) && w.id === currentWeekId) opt.selected = true;
       weekSelect.appendChild(opt);
     });
   }
@@ -576,7 +671,8 @@
     'qaqcadmin@scg.com': 'QAQC Admin',
     'qaqcsystemadmin@scg.com': 'QAQC System Admin',
     'ekalakw@scg.com': 'Ekalak Wacharayingyong',
-    'teerapoc@scg.com': 'Teerapong Chotiwannapruke'
+    'teerapoc@scg.com': 'Teerapong Chotiwannapruke',
+    'pongtemo@scg.com': 'Pongtep Moonsan'
   };
 
   function getCurrentUserPic(){
@@ -589,7 +685,9 @@
     priority: '',
     pic: '',
     status: '',
-    search: ''
+    search: '',
+    dateFrom: '',
+    dateTo: ''
   };
 
   function isFilterActive(){
@@ -597,7 +695,9 @@
            !!activeFilter.priority ||
            !!activeFilter.pic ||
            !!activeFilter.status ||
-           !!activeFilter.search;
+           !!activeFilter.search ||
+           !!activeFilter.dateFrom ||
+           !!activeFilter.dateTo;
   }
 
   function matchesFilter(item){
@@ -637,11 +737,13 @@
     const pillMy = document.getElementById('qq2-filter-pill-my');
     const pillHigh = document.getElementById('qq2-filter-pill-high');
     const pillNext = document.getElementById('qq2-filter-pill-next');
+    const pillDone = document.getElementById('qq2-filter-pill-done');
 
     if(pillAll) pillAll.classList.toggle('active', !hasFilter);
     if(pillMy) pillMy.classList.toggle('active', !!activeFilter.myTasksOnly);
     if(pillHigh) pillHigh.classList.toggle('active', activeFilter.priority === 'High');
     if(pillNext) pillNext.classList.toggle('active', activeFilter.status === 'Next Step');
+    if(pillDone) pillDone.classList.toggle('active', activeFilter.status === 'Action Done');
 
     const picSelect = document.getElementById('qq2-filter-pic');
     if(picSelect && picSelect.value !== activeFilter.pic) picSelect.value = activeFilter.pic;
@@ -652,20 +754,96 @@
     const searchInput = document.getElementById('qq2-filter-search');
     if(searchInput && searchInput.value !== activeFilter.search) searchInput.value = activeFilter.search;
 
+    const dateFromEl = document.getElementById('qq2-filter-date-from');
+    if(dateFromEl && dateFromEl.value !== activeFilter.dateFrom) dateFromEl.value = activeFilter.dateFrom;
+
+    const dateToEl = document.getElementById('qq2-filter-date-to');
+    if(dateToEl && dateToEl.value !== activeFilter.dateTo) dateToEl.value = activeFilter.dateTo;
+
     updateMyTaskPillLabel();
   }
 
-  function clearAllFilters(){
+  async function clearAllFilters(){
     activeFilter = {
       myTasksOnly: false,
       priority: '',
       pic: '',
       status: '',
-      search: ''
+      search: '',
+      dateFrom: '',
+      dateTo: ''
     };
+    const dateFromEl = document.getElementById('qq2-filter-date-from');
+    const dateToEl = document.getElementById('qq2-filter-date-to');
+    if(dateFromEl) dateFromEl.value = '';
+    if(dateToEl) dateToEl.value = '';
     updateFilterUI();
-    renderBody();
+    if(currentWeekId){
+      await refreshItems();
+    }
+    renderWeekSelect();
+  }
+
+  async function handleDateRangeChange(){
+    const fromVal = document.getElementById('qq2-filter-date-from').value;
+    const toVal = document.getElementById('qq2-filter-date-to').value;
+    activeFilter.dateFrom = fromVal;
+    activeFilter.dateTo = toVal;
+
+    if(fromVal || toVal){
+      bodyEl.innerHTML = '<div class="qq2-loading">กำลังโหลดข้อมูลช่วงวันที่...</div>';
+      await loadDateRangeData();
+    } else {
+      if(currentWeekId){
+        await refreshItems();
+      }
+    }
+    renderWeekSelect();
+    updateFilterUI();
     renderStats();
+    renderBody();
+    renderExportPreview();
+  }
+
+  async function loadDateRangeData(){
+    const from = activeFilter.dateFrom ? new Date(activeFilter.dateFrom + 'T00:00:00') : null;
+    const to = activeFilter.dateTo ? new Date(activeFilter.dateTo + 'T23:59:59') : null;
+
+    const matchingWeeks = weeks.filter(w => {
+      const range = parseWeekDateRange(w.label, w.created_at);
+      if(!range) return false;
+      if(from && range.end < from) return false;
+      if(to && range.start > to) return false;
+      return true;
+    });
+
+    const weekIds = matchingWeeks.map(w => w.id);
+    let fetched = [];
+    if(weekIds.length){
+      const {data, error} = await db.from('items').select('*').in('week_id', weekIds).order('no', {ascending:true});
+      if(!error && data){
+        fetched = data.map(rowToItem);
+      }
+    }
+
+    // Include items with due date matching the range
+    if(activeFilter.dateFrom || activeFilter.dateTo){
+      let q = db.from('items').select('*').not('due', 'is', null);
+      if(activeFilter.dateFrom) q = q.gte('due', activeFilter.dateFrom);
+      if(activeFilter.dateTo) q = q.lte('due', activeFilter.dateTo);
+      const {data: dueItems, error: dueErr} = await q;
+      if(!dueErr && dueItems){
+        const existingIds = new Set(fetched.map(i => i.id));
+        dueItems.forEach(di => {
+          if(!existingIds.has(di.id)){
+            fetched.push(rowToItem(di));
+            existingIds.add(di.id);
+          }
+        });
+      }
+    }
+
+    items = fetched;
   }
 
   function populatePicFilterOptions(){
@@ -760,8 +938,7 @@
           <th style="width:82px">Priority</th>
           <th style="width:104px">Status</th>
           <th style="width:170px">Note</th>
-          <th class="qq2-extra-col" style="width:120px">Due Date</th>
-          <th class="qq2-extra-col" style="width:45px">แท็ก</th>
+          <th style="width:125px">Due Date</th>
           <th style="width:26px"></th>
         </tr></thead>`;
         const tbody = document.createElement('tbody');
@@ -799,6 +976,15 @@
     tr.appendChild(tdNo);
 
     const tdAction = document.createElement('td');
+    if(isMultiWeekView()){
+      const wLabel = getWeekLabelById(item.weekId);
+      if(wLabel){
+        const wBadge = document.createElement('span');
+        wBadge.className = 'qq2-week-badge';
+        wBadge.textContent = '📅 ' + wLabel;
+        tdAction.appendChild(wBadge);
+      }
+    }
     const ta = document.createElement('textarea');
     ta.className = 'qq2-cell-input';
     ta.value = item.action;
@@ -865,7 +1051,6 @@
     tr.appendChild(tdNote);
 
     const tdDue = document.createElement('td');
-    tdDue.className = 'qq2-extra-col';
     const dueInput = document.createElement('input');
     dueInput.type = 'date';
     dueInput.className = 'qq2-cell-input';
@@ -873,21 +1058,6 @@
     dueInput.addEventListener('change', () => { item.due = dueInput.value || null; updateItem(item.id, {due: item.due}); });
     tdDue.appendChild(dueInput);
     tr.appendChild(tdDue);
-
-    const tdTag = document.createElement('td');
-    tdTag.className = 'qq2-extra-col';
-    const tagBtn = document.createElement('button');
-    tagBtn.className = 'qq2-tagbtn' + (item.tagPic ? ' on' : '');
-    tagBtn.textContent = '@';
-    tagBtn.title = 'แท็กชื่อ PIC ในข้อความส่งเมล';
-    tagBtn.onclick = async () => {
-      item.tagPic = !item.tagPic;
-      await updateItem(item.id, {tag_pic: item.tagPic});
-      renderBody();
-      renderExportPreview();
-    };
-    tdTag.appendChild(tagBtn);
-    tr.appendChild(tdTag);
 
     const tdDel = document.createElement('td');
     const delBtn = document.createElement('button');
@@ -898,9 +1068,6 @@
       if(confirm('ลบงานนี้ใช่ไหม?')){
         const {error} = await db.from('items').delete().eq('id', item.id);
         if(error){ setSyncState('offline', 'ลบไม่สำเร็จ: ' + error.message); return; }
-        if(item.action){
-          addDismissedTask(item.weekId, item.action, item.cat);
-        }
         items = items.filter(i => i.id !== item.id);
         renderStats();
         renderBody();
@@ -1223,161 +1390,6 @@
     return { pending, doneKeys };
   }
 
-  function addDismissedTask(weekId, actionText, cat){
-    try {
-      const key = `qq2_dismissed_${weekId}`;
-      const list = JSON.parse(localStorage.getItem(key) || '[]');
-      const itemKey = `${cat}:::${(actionText || '').trim().toLowerCase()}`;
-      if(!list.includes(itemKey)){
-        list.push(itemKey);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
-    } catch(e){}
-  }
-
-  function getDismissedTasks(weekId){
-    try {
-      const key = `qq2_dismissed_${weekId}`;
-      return new Set(JSON.parse(localStorage.getItem(key) || '[]'));
-    } catch(e){
-      return new Set();
-    }
-  }
-
-  function showResyncMsg(text, isError=false){
-    const msg = document.getElementById('qq2-resync-msg');
-    if(!msg) return;
-    msg.textContent = text;
-    msg.classList.toggle('error', !!isError);
-    msg.classList.add('show');
-    setTimeout(() => msg.classList.remove('show'), 3500);
-  }
-
-  async function syncWeekWithPrior(targetWeekId, isBackground=false){
-    if(!targetWeekId) return;
-    const targetIdx = weeks.findIndex(w => w.id === targetWeekId);
-    if(targetIdx <= 0) return;
-
-    const { pending: pendingItems, doneKeys } = await getPriorWeeksTaskStatus(targetWeekId);
-
-    const { data: currentDbItems, error: fetchErr } = await db
-      .from('items')
-      .select('*')
-      .eq('week_id', targetWeekId)
-      .order('no', {ascending: true});
-
-    if(fetchErr || !currentDbItems) return;
-
-    // 1. ตรวจหางานที่ต้องลบออก (เสร็จในวีคเก่าแล้ว ไม่ควรอยู่ในวีคนี้)
-    const toDelete = currentDbItems.filter(i => {
-      const key = `${i.cat}:::${(i.action || '').trim().toLowerCase()}`;
-      return doneKeys.has(key);
-    });
-
-    // 2. ตรวจหางานที่ต้องดึงเพิ่ม (ค้างในวีคเก่า และในวีคนี้ยังไม่มี/ไม่ได้ลบออก/ไม่ได้แก้ข้อความ)
-    const dismissedKeys = getDismissedTasks(targetWeekId);
-
-    const toAdd = pendingItems.filter(i => {
-      const priorAct = (i.action || '').trim().toLowerCase();
-      if(!priorAct) return false;
-      const key = `${i.cat}:::${priorAct}`;
-      if(dismissedKeys.has(key)) return false;
-
-      // เช็คว่าในวีคนี้มีงานนี้อยู่แล้วหรือไม่ (ป้องกันการดึงซ้ำเมื่องานถูกแก้ไขข้อความ)
-      const alreadyExists = currentDbItems.some(curr => {
-        if(curr.cat !== i.cat) return false;
-        const currAct = (curr.action || '').trim().toLowerCase();
-        if(!currAct) return false;
-        if(currAct === priorAct) return true;
-        // กรณีมีการแก้ไขข้อความหรือเติมคำท้าย/หน้า
-        if(currAct.startsWith(priorAct) || priorAct.startsWith(currAct)) return true;
-        if(priorAct.length > 20 && (currAct.includes(priorAct) || priorAct.includes(currAct))) return true;
-        return false;
-      });
-
-      return !alreadyExists;
-    });
-
-    if(toDelete.length === 0 && toAdd.length === 0){
-      if(!isBackground){
-        showResyncMsg('ข้อมูลตรงกับสัปดาห์ก่อนหน้าแล้ว');
-      }
-      return;
-    }
-
-    let changed = false;
-
-    if(toDelete.length){
-      const {error: delErr} = await db.from('items').delete().in('id', toDelete.map(i => i.id));
-      if(!delErr) changed = true;
-    }
-
-    let insertedCount = 0;
-    if(toAdd.length){
-      const toInsert = [];
-      CATEGORIES.forEach(cat => {
-        const catToAdd = toAdd.filter(i => i.cat === cat.id);
-        const catExistingNos = currentDbItems.filter(i => i.cat === cat.id).map(i => i.no);
-        let no = catExistingNos.length ? Math.max(...catExistingNos) + 1 : 1;
-        catToAdd.forEach(i => {
-          toInsert.push({
-            id: crypto.randomUUID(),
-            week_id: targetWeekId,
-            cat: cat.id,
-            no: no++,
-            action: (i.action || '').trim(),
-            pic1: i.pic1 || '-',
-            pic2: i.pic2 || '-',
-            status: 'Next Step',
-            note: i.note || '',
-            priority: normalizePriority(i.priority),
-            due: i.due || null,
-            tag_pic: !!i.tag_pic
-          });
-        });
-      });
-
-      const {error: insErr} = await db.from('items').insert(toInsert);
-      if(!insErr){
-        changed = true;
-        insertedCount = toInsert.length;
-      }
-    }
-
-    if(changed){
-      if(targetWeekId === currentWeekId){
-        await refreshItems();
-      }
-      if(!isBackground){
-        if(insertedCount > 0 && toDelete.length > 0){
-          showResyncMsg(`ดึงงานค้างเพิ่ม ${insertedCount} รายการ และนำงานที่เสร็จออก ${toDelete.length} รายการ`);
-        } else if(insertedCount > 0){
-          showResyncMsg(`ดึงงานค้างเพิ่ม ${insertedCount} รายการแล้ว`);
-        } else if(toDelete.length > 0){
-          showResyncMsg(`นำงานที่เสร็จในสัปดาห์ก่อนหน้าออก ${toDelete.length} รายการแล้ว`);
-        }
-      }
-    }
-  }
-
-  async function resyncPendingItems(){
-    if(!currentWeekId) return;
-    const btn = document.getElementById('qq2-resync-btn');
-    if(!btn) return;
-    const originalText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = '⏳ กำลังซิงก์...';
-
-    try {
-      await syncWeekWithPrior(currentWeekId, false);
-    } catch(err) {
-      showResyncMsg('เกิดข้อผิดพลาด: ' + (err.message || err), true);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = originalText;
-    }
-  }
-
   async function createNewWeek(label){
     const id = crypto.randomUUID();
     const {error: weekErr} = await db.from('weeks').insert({id, label});
@@ -1485,18 +1497,97 @@
     input.value = '';
     await createNewWeek(label);
   };
-  document.getElementById('qq2-extra-toggle').onclick = () => {
-    root.classList.toggle('show-extra');
-  };
-  const resyncBtn = document.getElementById('qq2-resync-btn');
-  if(resyncBtn) resyncBtn.onclick = resyncPendingItems;
+
+
 
   document.getElementById('qq2-export-toggle').onclick = () => {
     document.getElementById('qq2-export').classList.toggle('open');
     renderExportPreview();
   };
 
-  weekSelect.onchange = () => selectWeek(weekSelect.value);
+  weekSelect.onchange = async () => {
+    if(weekSelect.value === '__range__') return;
+    activeFilter.dateFrom = '';
+    activeFilter.dateTo = '';
+    const dateFromEl = document.getElementById('qq2-filter-date-from');
+    const dateToEl = document.getElementById('qq2-filter-date-to');
+    if(dateFromEl) dateFromEl.value = '';
+    if(dateToEl) dateToEl.value = '';
+    await selectWeek(weekSelect.value);
+    updateFilterUI();
+  };
+
+  function exportToExcel(){
+    if(typeof XLSX === 'undefined'){
+      alert('กำลังโหลดโมดูล Excel กรุณาลองใหม่อีกครั้ง');
+      return;
+    }
+
+    const filteredItems = items.filter(matchesFilter);
+    if(filteredItems.length === 0){
+      alert('ไม่มีรายการงานที่ตรงกับตัวกรองที่เลือกสำหรับส่งออก');
+      return;
+    }
+
+    const catMap = new Map();
+    CATEGORIES.forEach(c => catMap.set(c.id, c.name));
+
+    const exportRows = filteredItems.map((item, idx) => {
+      const weekLabel = getWeekLabelById(item.weekId) || currentWeekLabel();
+      const catName = catMap.get(item.cat) || item.cat;
+      return {
+        'สัปดาห์': weekLabel,
+        'ลำดับ': item.no || (idx + 1),
+        'หมวดหมู่งาน': catName,
+        'งานที่ต้องทำ': item.action || '',
+        'ผู้รับผิดชอบ 1': (item.pic1 && item.pic1 !== '-') ? item.pic1 : '',
+        'ผู้รับผิดชอบ 2': (item.pic2 && item.pic2 !== '-') ? item.pic2 : '',
+        'สถานะ': item.status || 'Next Step',
+        'ลำดับความสำคัญ': (item.priority && item.priority !== '-') ? item.priority : '',
+        'กำหนดเสร็จ (Due Date)': item.due || '',
+        'หมายเหตุ': item.note || ''
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+
+    ws['!cols'] = [
+      { wch: 22 }, // สัปดาห์
+      { wch: 8 },  // ลำดับ
+      { wch: 44 }, // หมวดหมู่งาน
+      { wch: 55 }, // งานที่ต้องทำ
+      { wch: 24 }, // ผู้รับผิดชอบ 1
+      { wch: 24 }, // ผู้รับผิดชอบ 2
+      { wch: 15 }, // สถานะ
+      { wch: 14 }, // ลำดับความสำคัญ
+      { wch: 16 }, // กำหนดเสร็จ
+      { wch: 32 }  // หมายเหตุ
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'QAQC_MOM');
+
+    let fileName = 'QAQC_Weekly_MOM';
+    if(activeFilter.dateFrom || activeFilter.dateTo){
+      const fromStr = activeFilter.dateFrom || 'เริ่มต้น';
+      const toStr = activeFilter.dateTo || 'สิ้นสุด';
+      fileName += `_${fromStr}_ถึง_${toStr}`;
+    } else {
+      const currentLbl = currentWeekLabel();
+      if(currentLbl){
+        fileName += '_' + currentLbl.replace(/[^a-zA-Z0-9ก-๙]/g, '_');
+      }
+    }
+    if(activeFilter.status === 'Action Done'){
+      fileName += '_ActionDone';
+    }
+    fileName += '.xlsx';
+
+    XLSX.writeFile(wb, fileName);
+  }
+
+  const exportExcelBtn = document.getElementById('qq2-export-excel-btn');
+  if(exportExcelBtn) exportExcelBtn.onclick = exportToExcel;
 
   document.getElementById('qq2-copy-btn').onclick = async () => {
     const plainText = buildEmailText();
@@ -1572,6 +1663,16 @@
     renderBody();
     renderStats();
   };
+
+  document.getElementById('qq2-filter-pill-done').onclick = () => {
+    activeFilter.status = activeFilter.status === 'Action Done' ? '' : 'Action Done';
+    updateFilterUI();
+    renderBody();
+    renderStats();
+  };
+
+  document.getElementById('qq2-filter-date-from').onchange = handleDateRangeChange;
+  document.getElementById('qq2-filter-date-to').onchange = handleDateRangeChange;
 
   document.getElementById('qq2-filter-pic').onchange = (e) => {
     activeFilter.pic = e.target.value;

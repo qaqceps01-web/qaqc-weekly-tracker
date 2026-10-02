@@ -40,6 +40,7 @@ It is used **live during weekly team meetings while screen-sharing**. A single t
 - `Laddawan Suwankeeree`
 - `Teerapong Chotiwannapruke`
 - `Ekalak Wacharayingyong`
+- `Pongtep Moonsan`
 *Searchable Combobox*: Users can type name prefixes/keywords (e.g. `pit` -> filters `Pitchayapa Yaklai`) to quickly autocomplete and select PICs.
 
 ### Priorities
@@ -52,24 +53,25 @@ It is used **live during weekly team meetings while screen-sharing**. A single t
    - Week switcher is a `<select class="qq2-week-select">` dropdown.
    - Clicking `+ สัปดาห์ใหม่` opens an inline form to name a new week.
    - When created, **all items with status `Next Step` (not `Action Done`) across all prior weeks (that are not yet in the target week) are automatically carried forward**.
-   - **Bidirectional Re-sync & Auto-Cleanup**:
+   - **Auto-Cleanup**:
      - If an item in an older week is changed from `Next Step` -> `Action Done`, it is automatically deleted from later weeks (including the latest week).
-     - If an item in an older week is changed from `Action Done` -> `Next Step`, clicking `🔄 ดึงงานค้างเพิ่ม` on the current/latest week will pull it back immediately without duplicates.
-     - Clicking `🔄 ดึงงานค้างเพิ่ม` performs a full 2-way sync: it pulls newly pending items and removes items completed in earlier weeks.
-     - **Independent Edit & Delete in Latest Week**:
-       - Editing a task's text in the current week does not create duplicate rows; fuzzy/prefix matching prevents older text from being re-pulled.
-       - Deleting a task (`×`) in the current week permanently deletes it for that week; dismissed tasks are remembered and never re-pulled.
-       - Background loading/switching weeks never injects unrequested rows automatically.
+     - Background loading/switching weeks never injects unrequested rows automatically.
 4. **Priority & Focus System**:
    - `Priority` is displayed as a primary column in the main table with color-coded badges (`High` red, `Medium` amber, `Low` blue).
    - Items with `Priority = High` that are not done (`Next Step`) get a red visual focus border indicator to help the team focus during screen-shares.
    - The toolbar stats summarize active high-priority tasks (e.g. `🔥 X ต้อง Focus`).
-5. **Collapsible Extra Columns**:
-   - `PIC` and `PIC 2` are both primary columns and always visible in the main table without clicking any buttons.
-   - Columns for `Due Date` and `@tag` toggle are hidden by default and revealed via the toggle button `แสดงคอลัมน์เพิ่มเติม (Due Date / แท็ก)`.
-6. **Email MOM Export Generator**:
-   - Generates formatted plain text for email distribution.
-   - Includes greeting, CC line, intro sentence naming current week, numbered categories with `-` bullet points for **Next Step items only**, and sign-off.
+5. **Primary Permanent Columns**:
+   - `PIC`, `PIC 2`, and `Due Date` are primary columns and permanently visible in the main table without needing to click any toggle button.
+6. **Filter & Date Range System**:
+   - Filter pills: `ทั้งหมด`, `👤 งานของฉัน`, `🔥 High เท่านั้น`, `⏳ ยังไม่เสร็จ`, `✅ เสร็จแล้ว` (Action Done).
+   - Date Range filter: Users can enter `จากวันที่` and `ถึงวันที่` to view cross-week tasks based on parsed week date ranges and item due dates.
+   - In cross-week view, items display a `📅 [สัปดาห์]` badge to indicate their parent week.
+7. **Excel (.xlsx) Export Generator**:
+   - Powered by SheetJS (`xlsx.full.min.js`) via CDN without build steps.
+   - Button `📥 ส่งออก Excel` exports the currently viewed/filtered table into a formatted `.xlsx` workbook with auto-column widths and Thai headers.
+8. **Email MOM Export Generator**:
+   - Generates formatted plain text and HTML for email distribution.
+   - Includes greeting, CC line, intro sentence naming current week or date range, numbered categories with `-` bullet points for **Next Step items only**, and sign-off.
    - Items with priority include `[Priority: สูง]` tag.
    - Items with assigned PICs automatically include `@PIC1` / `@PIC2` in the export text.
    - Email template settings (greeting, CC, signoff) are hardcoded in `EMAIL_TEMPLATE` in JS.
