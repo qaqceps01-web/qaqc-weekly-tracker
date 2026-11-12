@@ -24,10 +24,12 @@ create table if not exists public.items (
   priority text not null default '-',
   due date,
   tag_pic boolean not null default false,
+  task_key uuid default gen_random_uuid(),
   updated_at timestamptz not null default now()
 );
 
 create index if not exists items_week_id_idx on public.items (week_id);
+create index if not exists items_task_key_idx on public.items (task_key);
 
 alter table public.weeks enable row level security;
 alter table public.items enable row level security;
@@ -103,3 +105,9 @@ insert into public.items (id, week_id, cat, no, action, pic1, pic2, status, note
   ('j15','wk2','cat3',15,'จัดทำ Mock up Doc Tracking Dashboard สำหรับงานฝั่ง Engineering และ Execution','Pitchayapa Yaklai','-','Next Step','','-',null,false),
   ('j16','wk2','cat3',16,'ทำ Project Charter รวบรวม Knowledge Base ส่งให้ทีม AI CBM','Pitchayapa Yaklai','-','Next Step','','-',null,false)
 on conflict (id) do nothing;
+
+-- Backfill: group existing rows by (cat, normalized action text) so copies of
+-- the same task share one lineage key. Idempotent; no-op once all rows are keyed.
+update public.items
+set task_key = md5(cat || '::' || lower(btrim(action)))::uuid
+where task_key is null;

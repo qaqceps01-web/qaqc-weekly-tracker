@@ -459,7 +459,8 @@
       id: r.id, weekId: r.week_id, cat: r.cat, no: r.no, action: r.action || '',
       pic1: r.pic1 || '-', pic2: r.pic2 || '-', status: r.status || 'Next Step',
       note: r.note || '', priority: normalizePriority(r.priority), due: r.due || '',
-      tagPic: !!r.tag_pic
+      tagPic: !!r.tag_pic,
+      taskKey: r.task_key || null
     };
   }
 
@@ -700,7 +701,13 @@
            !!activeFilter.dateTo;
   }
 
+  // Rows added while a filter is on stay visible until the filter changes,
+  // otherwise a blank new row is hidden the moment it is created.
+  let justAdded = { sig: '', ids: new Set() };
+  function filterSig(){ return JSON.stringify(activeFilter); }
+
   function matchesFilter(item){
+    if(justAdded.ids.has(item.id) && justAdded.sig === filterSig()) return true;
     if(activeFilter.myTasksOnly){
       const myPic = getCurrentUserPic();
       if(myPic){
@@ -1026,16 +1033,20 @@
     statusBtn.onclick = async () => {
       item.status = item.status === 'Action Done' ? 'Next Step' : 'Action Done';
       await updateItem(item.id, {status: item.status});
+
+      // Bidirectional cleanup: mark any copy done -> remove all sibling copies
+      // (earlier stale ghosts AND later carried ones).
+      if(item.status === 'Action Done'){
+        await removeTaskCopiesAcrossWeeks(item);
+      }
+
+      if(activeFilter.dateFrom || activeFilter.dateTo){
+        await loadDateRangeData();
+      }
+
       renderStats();
       renderBody();
       renderExportPreview();
-
-      const currentIdx = weeks.findIndex(w => w.id === item.weekId);
-      if(currentIdx !== -1 && currentIdx < weeks.length - 1){
-        if(item.status === 'Action Done'){
-          await removeFinishedTaskFromLaterWeeks(item);
-        }
-      }
     };
     tdStatus.appendChild(statusBtn);
     tr.appendChild(tdStatus);
@@ -1297,15 +1308,21 @@
   }
 
   async function addItem(catId){
+    // Prefill from the active filter so the new task belongs to the person being viewed
+    const filterPic = activeFilter.pic || (activeFilter.myTasksOnly ? getCurrentUserPic() : '') || '-';
     const item = {
       id: crypto.randomUUID(),
       week_id: currentWeekId,
+      task_key: crypto.randomUUID(),
       no: nextNoForCat(catId),
-      cat: catId, action: '', pic1: '-', pic2: '-',
-      status: 'Next Step', note: '', priority: '-', due: null, tag_pic: false
+      cat: catId, action: '', pic1: filterPic, pic2: '-',
+      status: 'Next Step', note: '', priority: activeFilter.priority || '-', due: null, tag_pic: false
     };
     const {error} = await db.from('items').insert(item);
     if(error){ setSyncState('offline', 'เพิ่มงานไม่สำเร็จ: ' + error.message); return; }
+    const sig = filterSig();
+    if(justAdded.sig !== sig) justAdded = { sig, ids: new Set() };
+    justAdded.ids.add(item.id);
     items.push(rowToItem(item));
     renderStats();
     renderBody();
@@ -1319,75 +1336,32 @@
     await refreshItems();
   }
 
-  async function removeFinishedTaskFromLaterWeeks(item){
-    if(!item || !item.action || !item.action.trim()) return;
-    const currentIdx = weeks.findIndex(w => w.id === item.weekId);
-    if(currentIdx === -1 || currentIdx >= weeks.length - 1) return;
-
-    const laterWeeks = weeks.slice(currentIdx + 1);
-    const laterWeekIds = laterWeeks.map(w => w.id);
-    const targetAction = item.action.trim().toLowerCase();
-
-    const { data: laterItems, error } = await db
-      .from('items')
-      .select('id, cat, action, status')
-      .in('week_id', laterWeekIds)
-      .eq('cat', item.cat);
-
-    if(error || !laterItems || !laterItems.length) return;
-
-    const toDeleteIds = laterItems
-      .filter(it => (it.action || '').trim().toLowerCase() === targetAction)
-      .map(it => it.id);
-
-    if(toDeleteIds.length){
-      await db.from('items').delete().in('id', toDeleteIds);
-    }
+  // Every copy of a task shares its task_key (the migration backfilled old
+  // rows), so this reaches every copy in any week even after the text was edited.
+  async function removeTaskCopiesAcrossWeeks(item){
+    if(!item || !item.taskKey) return;
+    const {error} = await db.from('items').delete()
+      .eq('task_key', item.taskKey)
+      .neq('id', item.id);
+    if(error){ setSyncState('offline', 'ลบสำเนางานไม่สำเร็จ: ' + error.message); }
   }
 
-  async function getPriorWeeksTaskStatus(targetWeekId){
+  // Carry forward only from the week right before the new one. That week is
+  // the team's latest edited state: tasks deleted or reworded there must not
+  // come back from older weeks, and edits must not leave the old wording behind.
+  async function getCarryOverItems(targetWeekId){
     const targetIdx = weeks.findIndex(w => w.id === targetWeekId);
-    if(targetIdx <= 0) return { pending: [], doneKeys: new Set() };
-
-    const priorWeeks = weeks.slice(0, targetIdx);
-    const priorWeekIds = priorWeeks.map(w => w.id);
+    if(targetIdx <= 0) return [];
+    const prevWeekId = weeks[targetIdx - 1].id;
 
     const { data: rawItems, error } = await db
       .from('items')
       .select('*')
-      .in('week_id', priorWeekIds)
+      .eq('week_id', prevWeekId)
       .order('no', {ascending: true});
 
-    if(error || !rawItems) return { pending: [], doneKeys: new Set() };
-
-    const weekIndexMap = new Map();
-    priorWeeks.forEach((w, idx) => weekIndexMap.set(w.id, idx));
-
-    rawItems.sort((a, b) => {
-      const wA = weekIndexMap.get(a.week_id) ?? 0;
-      const wB = weekIndexMap.get(b.week_id) ?? 0;
-      if(wA !== wB) return wA - wB;
-      return (a.no || 0) - (b.no || 0);
-    });
-
-    const latestTaskMap = new Map();
-    for(const r of rawItems){
-      const act = (r.action || '').trim();
-      if(!act) continue;
-      const key = `${r.cat}:::${act.toLowerCase()}`;
-      latestTaskMap.set(key, r);
-    }
-
-    const pending = [];
-    const doneKeys = new Set();
-    for(const [key, r] of latestTaskMap.entries()){
-      if(r.status !== 'Action Done'){
-        pending.push(r);
-      } else {
-        doneKeys.add(key);
-      }
-    }
-    return { pending, doneKeys };
+    if(error || !rawItems) return [];
+    return rawItems.filter(r => r.status !== 'Action Done' && (r.action || '').trim());
   }
 
   async function createNewWeek(label){
@@ -1396,7 +1370,7 @@
     if(weekErr){ setSyncState('offline', 'สร้างสัปดาห์ไม่สำเร็จ: ' + weekErr.message); return; }
     
     weeks = await fetchWeeks();
-    const { pending: pendingItems } = await getPriorWeeksTaskStatus(id);
+    const pendingItems = await getCarryOverItems(id);
     if(pendingItems.length){
       const toInsert = [];
       CATEGORIES.forEach(cat => {
@@ -1406,6 +1380,7 @@
           toInsert.push({
             id: crypto.randomUUID(),
             week_id: id,
+            task_key: i.task_key || i.id,
             cat: cat.id,
             no: no++,
             action: (i.action || '').trim(),
@@ -1490,12 +1465,23 @@
   };
   document.getElementById('qq2-newweek-confirm').onclick = async () => {
     const input = document.getElementById('qq2-newweek-input');
+    const confirmBtn = document.getElementById('qq2-newweek-confirm');
     const label = input.value.trim();
     if(!label){ input.style.borderColor = '#B23A3A'; return; }
+    if(confirmBtn.disabled) return;
+    if(weeks.some(w => (w.label || '').trim() === label)){
+      alert('มีสัปดาห์ที่ใช้ชื่อนี้อยู่แล้ว กรุณาใช้ชื่ออื่นค่ะ');
+      return;
+    }
     input.style.borderColor = '';
     document.getElementById('qq2-newweek-form').classList.remove('open');
     input.value = '';
-    await createNewWeek(label);
+    confirmBtn.disabled = true;
+    try{
+      await createNewWeek(label);
+    } finally {
+      confirmBtn.disabled = false;
+    }
   };
 
 

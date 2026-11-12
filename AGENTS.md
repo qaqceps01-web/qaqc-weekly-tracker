@@ -52,9 +52,12 @@ It is used **live during weekly team meetings while screen-sharing**. A single t
 3. **Week Management, Auto Carry-Forward & Re-sync**:
    - Week switcher is a `<select class="qq2-week-select">` dropdown.
    - Clicking `+ สัปดาห์ใหม่` opens an inline form to name a new week.
-   - When created, **all items with status `Next Step` (not `Action Done`) across all prior weeks (that are not yet in the target week) are automatically carried forward**.
-   - **Auto-Cleanup**:
-     - If an item in an older week is changed from `Next Step` -> `Action Done`, it is automatically deleted from later weeks (including the latest week).
+   - When created, **only the `Next Step` items of the immediately previous week are carried forward** (never from older weeks). The previous week is the team's latest edited state, so tasks deleted or reworded there do not come back from older weeks as ghosts or duplicates.
+   - Carry-forward **copies inherit the source row's `task_key`** (stable lineage across weeks).
+   - **Auto-Cleanup (bidirectional, keyed by `task_key`)**:
+     - If a copy is changed to `Action Done`, **all sibling copies of the same task (any week, earlier or later)** are deleted. The completed copy stays as the completion record in its week.
+     - Text-edit-proof: cleanup matches `task_key`, not the action text.
+     - Week creation has a double-submit guard and rejects duplicate week labels.
      - Background loading/switching weeks never injects unrequested rows automatically.
 4. **Priority & Focus System**:
    - `Priority` is displayed as a primary column in the main table with color-coded badges (`High` red, `Medium` amber, `Low` blue).
@@ -87,7 +90,8 @@ It is used **live during weekly team meetings while screen-sharing**. A single t
 
 ### Database Schema
 - **`public.weeks`**: `(id text PK, label text, created_at timestamptz)`
-- **`public.items`**: `(id text PK, week_id text FK -> weeks.id, cat text, no int, action text, pic1 text, pic2 text, status text, note text, priority text, due date, tag_pic bool, updated_at timestamptz)`
+- **`public.items`**: `(id text PK, week_id text FK -> weeks.id, cat text, no int, action text, pic1 text, pic2 text, status text, note text, priority text, due date, tag_pic bool, task_key uuid, updated_at timestamptz)`
+- **Task lineage**: `task_key` groups all per-week copies of the same logical task. Carry-forward inhereting rows share the source's key; new items get a fresh UUID. Deterministic backfill groups legacy rows by `(cat, lower(trim(action)))` — see [`database/migration_20261027_task_key.sql`](file:///c:/Users/Moji/Projects/qaqc-weekly-tracker/database/migration_20261027_task_key.sql) and `database/schema.sql`.
 - **Security**: Open RLS policies (`using (true)`) matching the live meeting single-typist screen-share workflow.
 - **Realtime**: Postgres changes on `weeks` and `items` are broadcast via Supabase Realtime channel `qq2-live`.
 
