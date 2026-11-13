@@ -1795,7 +1795,6 @@
   }
   fetchPageTag().then(tag => { loadedPageTag = tag; });
   document.addEventListener('visibilitychange', () => { if(!document.hidden) isPageStale(); });
-  setInterval(isPageStale, 5 * 60 * 1000);
   document.getElementById('qq2-update-reload').onclick = () => location.reload();
 
   (async function init(){
