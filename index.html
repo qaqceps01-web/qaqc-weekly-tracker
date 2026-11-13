@@ -53,6 +53,9 @@
   .qq2-stats .sn{color:var(--next-text);font-weight:700}
   .qq2-stats .sf{color:#C53030;font-weight:700}
   .qq2-sync{font-size:11.5px;color:var(--muted)}
+  .qq2-update{background:#FEF3C7;color:#92400E;font-size:13px;font-weight:700;padding:8px 16px;display:flex;align-items:center;gap:12px}
+  .qq2-update[hidden]{display:none}
+  .qq2-update button{background:#fff;border:1px solid #D9A441;color:#92400E;font-size:12.5px;font-weight:700;padding:4px 11px}
   .qq2-sync .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#8FBF9F;margin-right:5px}
   .qq2-sync.offline .dot{background:#C4CBCE}
   .qq2-extra-toggle{font-size:12.5px;color:var(--accent);background:transparent;border:1px solid var(--line);
@@ -215,6 +218,10 @@
 </div>
 
 <div id="qq2" class="qq2-hidden">
+  <div class="qq2-update" id="qq2-update" role="alert" hidden>
+    <span>มีเวอร์ชันใหม่ของหน้านี้ กรุณารีเฟรชก่อนใช้งานต่อ</span>
+    <button id="qq2-update-reload" type="button">รีเฟรชหน้านี้</button>
+  </div>
   <div class="qq2-header">
     <div class="qq2-header-row">
       <div class="qq2-title">QA/QC Weekly Sync</div>
@@ -1473,6 +1480,10 @@
       alert('มีสัปดาห์ที่ใช้ชื่อนี้อยู่แล้ว กรุณาใช้ชื่ออื่นค่ะ');
       return;
     }
+    if(await isPageStale()){
+      alert('หน้านี้เป็นเวอร์ชันเก่า กรุณารีเฟรชหน้าเว็บก่อนสร้างสัปดาห์ใหม่ค่ะ');
+      return;
+    }
     input.style.borderColor = '';
     document.getElementById('qq2-newweek-form').classList.remove('open');
     input.value = '';
@@ -1764,6 +1775,28 @@
       showAuth();
     });
   }
+
+  // Stale-tab guard: a tab left open keeps running the code it loaded, so an
+  // old tab can keep applying outdated rules (e.g. carry-forward) after a
+  // deploy. Compare the served page's ETag with the one seen at load.
+  const updateEl = document.getElementById('qq2-update');
+  let loadedPageTag = null;
+  async function fetchPageTag(){
+    try{
+      const r = await fetch(location.pathname, {method:'HEAD', cache:'no-store'});
+      return r.ok ? (r.headers.get('etag') || r.headers.get('last-modified')) : null;
+    }catch(_e){ return null; }
+  }
+  async function isPageStale(){
+    const tag = await fetchPageTag();
+    const stale = !!(tag && loadedPageTag && tag !== loadedPageTag);
+    if(stale) updateEl.hidden = false;
+    return stale;
+  }
+  fetchPageTag().then(tag => { loadedPageTag = tag; });
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) isPageStale(); });
+  setInterval(isPageStale, 5 * 60 * 1000);
+  document.getElementById('qq2-update-reload').onclick = () => location.reload();
 
   (async function init(){
     if(!configured){
